@@ -1,0 +1,45 @@
+Parameters:
+  EnvironmentSize:
+    Type: String
+    Default: Small
+    AllowedValues:
+      - Small
+      - Medium
+      - Large
+    Description: Choose the Environment Size (S,M,L)
+Mappings:
+  RegionMap:                      # Setup mappings for the European regions
+    eu-west-1:
+      "AmazonLinux" : "ami-ebd02392" # Amazon Linux AMI 2017.03.1
+    eu-central-1:
+      "AmazonLinux" : "ami-657bd20a" # Amazon Linux AMI 2017.03.1
+    eu-west-2:
+      "AmazonLinux" : "ami-489f8e2c" # Amazon Linux AMI 2017.03.1
+  InstanceSize:
+    Small:
+      "EC2" : "t2.micro"
+      "DB" : "db.t2.micro"
+    Medium:
+      "EC2" : "t2.small"
+      "DB" : "db.t2.small"
+    Large:
+      "EC2" : "t2.medium"
+      "DB" : "db.t2.medium"
+Resources:
+  DB:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      AllocatedStorage: 5
+      StorageType: gp2
+      DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB] # Dynamic mapping + Pseudo Parameter
+      DBName: wordpress
+      Engine: MySQL
+      MasterUsername: wordpress
+      MasterUserPassword: wordpress
+  EC2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AmazonLinux] # Dynamic mapping + Pseudo Parameter
+      InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
+  S3:
+    Type: "AWS::S3::Bucket"
